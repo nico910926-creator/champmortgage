@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宸品團隊 CHAMP - 買房資金神隊友 🏠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #b25d38; /* 宸品紅棕 */
+            --secondary: #8bb373; /* 宸品綠 */
+            --bg: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-main: #333333; /* 強制深色字體，解決字體不見的問題 */
+        }
+
+        * { box-sizing: border-box; font-family: 'Noto Sans TC', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); margin: 0; padding: 0; }
+
+        /* --- 頂部導覽 (左 Logo 右 IG) --- */
+        .navbar { 
+            background: var(--card-bg); 
+            padding: 15px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-logo { height: 120px; width: auto; } /* 放大 Logo */
+        .nav-ig { height: 120px; width: auto; transition: transform 0.3s; } /* IG 圖示 */
+        .nav-ig:hover { transform: scale(1.1); }
+
+        .container { max-width: 850px; margin: 30px auto; padding: 0 20px; }
+        
+        /* --- 主卡片設計 (內容加大) --- */
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            padding: 40px; 
+            border-top: 10px solid var(--primary); 
+        }
+
+        h1 { color: var(--primary); text-align: center; font-size: 2.2rem; margin-bottom: 30px; }
+
+        /* --- 方案按鈕 --- */
+        .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .preset-btn { 
+            background: #fff; border: 2.5px solid var(--primary); color: var(--primary); 
+            padding: 12px; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1.1rem;
+            transition: 0.3s; 
+        }
+        .preset-btn:hover, .preset-btn.active { background: var(--primary); color: #fff; }
+
+        /* --- 警告視窗設計 --- */
+        .warning-box {
+            background: #fff3f3;
+            color: #d32f2f;
+            border: 2px solid #ffcdd2;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            font-size: 1.15rem;
+            display: none; /* 預設隱藏 */
+            text-align: center;
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* --- 表單大字體設計 --- */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 10px; font-weight: bold; font-size: 1.2rem; color: #555; }
+        input { 
+            width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 12px; 
+            font-size: 1.4rem; font-weight: bold; color: var(--text-main); outline: none; transition: 0.3s; 
+        }
+        input:focus { border-color: var(--primary); background: #fffdfb; }
+        input[readonly] { background: #f8f9fa; color: #d32f2f; border-style: dashed; } /* 讓自動計算的金額更顯眼 */
+
+        .btn-calc { 
+            background: var(--primary); color: #fff; width: 100%; border: none; 
+            padding: 20px; border-radius: 12px; font-size: 1.6rem; font-weight: bold; 
+            cursor: pointer; margin-top: 25px; transition: 0.3s; 
+        }
+        .btn-calc:hover { background: #964d2d; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(178, 93, 56, 0.3); }
+
+        /* --- 結果顯示區 (數字特大) --- */
+        .results { margin-top: 40px; display: none; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .res-header { 
+            background: #eaf3e5; color: #2c4c1d; padding: 20px; border-radius: 12px; 
+            font-size: 1.3rem; font-weight: bold; border-left: 8px solid var(--secondary); margin-bottom: 20px; 
+        }
+        .fee-item { 
+            display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px dashed #ddd; 
+            font-size: 1.2rem; font-weight: bold;
+        }
+        .fee-item strong { color: #d32f2f; font-size: 1.6rem; } /* 月繳數字加大 */
+
+        /* 總金額背景區 (超級醒目) */
+        .total-box { 
+            background: var(--primary); color: #fff; padding: 30px; border-radius: 15px; 
+            margin-top: 30px; text-align: center; box-shadow: 0 10px 20px rgba(178, 93, 56, 0.2);
+        }
+        .total-box div { font-size: 1.3rem; margin-bottom: 10px; opacity: 0.9; }
+        .total-box span { font-size: 3.5rem; font-weight: 900; } /* 總金額字體特大 */
+
+        /* --- 頁尾與同行聯絡資訊 --- */
+        .footer { text-align: center; margin-top: 40px; padding-bottom: 50px; line-height: 1.8; }
+        
+        /* 強制鎖定在同一行，絕對不准換行！ */
+        .advisor-line {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap; /* 關鍵：禁止換行 */
+            gap: 12px; /* 文字和圖示的間距 */
+            margin-bottom: 15px;
+            color: #777; 
+            font-size: 1.3rem;
+            white-space: nowrap; /* 文字也不准斷行 */
+        }
+        
+        .contact-line {
+            margin-bottom: 25px;
+        }
+        
+        .contact-line strong { 
+            color: var(--primary); 
+            font-size: 1.8rem; 
+            margin: 0;
+        }
+        
+        /* 圖示保持又大又挺！ */
+        .inline-social-icon { 
+            height: 60px; /* 圖示放大大大！ */
+            width: auto; 
+            transition: transform 0.3s; 
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .inline-social-icon:hover { transform: scale(1.1); }
+
+        /* 手機版適應 */
+        @media (max-width: 600px) { 
+            .grid, .presets { grid-template-columns: 1fr; } 
+            .navbar { padding: 10px 15px; }
+            .nav-logo { height: 80px; }
+            .nav-ig { height: 35px; }
+            h1 { font-size: 1.8rem; }
+            .total-box span { font-size: 2.5rem; }
+            
+            /* 手機版字體與圖示強制保護 */
+            .advisor-line { font-size: 1.2rem; gap: 8px; }
+            .inline-social-icon { height: 55px !important; } /* 手機版圖示依然保持巨大！ */
+            .contact-line strong { font-size: 1.45rem; } /* 電話稍微縮小一點避免超出螢幕 */
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <img src="logo.png" alt="宸品團隊 CHAMP" class="nav-logo">
+    <a href="https://www.instagram.com/champ.estate/" target="_blank">
+        <img src="ig_logo.png" alt="IG 連結" class="nav-ig">
+    </a>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <h1>🏗️ 購屋資金一鍵精算</h1>
+        
+        <div class="presets">
+            <button class="preset-btn active" onclick="apply(80, 40, 5, 1.775, this, 'xinQingAn')">✨ 新青安</button>
+            <button class="preset-btn" onclick="apply(80, 30, 3, 2.06, this, 'firstTime')">👤 一般首購</button>
+            <button class="preset-btn" onclick="apply(70, 20, 0, 2.18, this, 'normal')">🏢 一般貸款</button>
+        </div>
+
+        <div id="warning-msg" class="warning-box"></div>
+
+        <div class="grid">
+            <div class="form-group">
+                <label>💰 房屋成交價 (萬)</label>
+                <input type="number" id="price" value="1500" oninput="sync()">
+            </div>
+            <div class="form-group">
+                <label>📈 貸款成數 (%)</label>
+                <input type="number" id="ltv" value="80" oninput="sync()">
+            </div>
+            <div class="form-group">
+                <label>🏦 貸款金額 (萬)</label>
+                <input type="number" id="loan" readonly>
+            </div>
+            <div class="form-group">
+                <label>💵 自備頭期款 (萬)</label>
+                <input type="number" id="down" readonly>
+            </div>
+            <div class="form-group">
+                <label>⏳ 貸款年限 (年)</label>
+                <input type="number" id="years" value="40">
+            </div>
+            <div class="form-group">
+                <label>🎈 寬限期 (年)</label>
+                <input type="number" id="grace" value="5">
+            </div>
+            <div class="form-group">
+                <label>📊 貸款利率 (%)</label>
+                <input type="number" id="rate" step="0.01" value="1.775">
+            </div>
+            <div class="form-group">
+                <label>🧾 雜費估算 (萬)</label>
+                <input type="number" id="misc" value="5">
+            </div>
+        </div>
+
+        <button class="btn-calc" onclick="calc()">🔥 立即產生專業試算報告</button>
+
+        <div class="results" id="res">
+            <div class="res-header">📝 您的購屋資金明細表</div>
+            <div class="fee-list">
+                <div class="fee-item"><span>🌙 寬限期內月繳</span><strong id="m1">0</strong></div>
+                <div class="fee-item"><span>☀️ 寬限期後月繳</span><strong id="m2">0</strong></div>
+                <div class="fee-item"><span>🤝 仲介服務費 (買方2%)</span><span id="f1">0</span></div>
+                <div class="fee-item"><span>🛡️ 履約保證費 (0.03%)</span><span id="f2">0</span></div>
+                <div class="fee-item"><span>✒️ 代書費 (簽約/過戶/設定)</span><span id="f3">0</span></div>
+                <div class="fee-item"><span>🏛️ 地政設定規費</span><span id="f4">0</span></div>
+            </div>
+            <div class="total-box">
+                <div>🎯 總共需準備現金 (頭期款 + 購屋雜費)</div>
+                <span id="total">0</span> 萬元
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        
+        <div class="advisor-line">
+            <span>深耕桃園 | 您的專屬顧問</span>
+            <a href="https://line.me/ti/p/你的專屬ID" target="_blank" title="點擊加 LINE 聯絡">
+                <img src="line_logo.png" alt="加我的 LINE" class="inline-social-icon">
+            </a>
+        </div>
+        
+        <div class="contact-line">
+            <strong>歡迎找張宸嘉 0966-668-950 賞屋</strong>
+        </div>
+        
+        <span style="color: #888; font-size: 1.1rem;">宸品團隊 🏠 讓成家更簡單</span>
+    </div>
+</div>
+
+<script>
+    let currentPreset = 'xinQingAn'; // 預設方案紀錄
+
+    // 套用快捷方案
+    function apply(l, y, g, r, btn, type) {
+        currentPreset = type; // 記錄目前選擇的是哪個方案
+        document.getElementById('ltv').value = l;
+        document.getElementById('years').value = y;
+        document.getElementById('grace').value = g;
+        document.getElementById('rate').value = r;
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        sync();
+    }
+
+    // 同步計算貸款與頭期金額 (加入新青安 1000 萬防呆)
+    function sync() {
+        let p = parseFloat(document.getElementById('price').value) || 0;
+        let l = parseFloat(document.getElementById('ltv').value) || 0;
+        let loan = p * l / 100;
+        
+        let warningBox = document.getElementById('warning-msg');
+
+        // 新青安 1000 萬上限邏輯
+        if (currentPreset === 'xinQingAn' && loan > 1000) {
+            loan = 1000; // 強制將貸款壓在 1000 萬
+            warningBox.style.display = 'block';
+            warningBox.innerHTML = '⚠️ <strong>溫馨提醒：</strong>「新青安專案」最高貸款額度為 1,000 萬元，已為您自動調整貸款與頭期款金額。';
+        } else {
+            warningBox.style.display = 'none';
+        }
+
+        document.getElementById('loan').value = loan.toFixed(2);
+        document.getElementById('down').value = (p - loan).toFixed(2);
+    }
+
+    // 執行房貸與購屋成本計算
+    function calc() {
+        let pWan = parseFloat(document.getElementById('price').value) || 0;
+        let price = pWan * 10000;
+        let loanWan = parseFloat(document.getElementById('loan').value) || 0;
+        let loan = loanWan * 10000;
+        let rate = (parseFloat(document.getElementById('rate').value) / 100) / 12;
+        let months = parseInt(document.getElementById('years').value) * 12;
+        let gYears = parseInt(document.getElementById('grace').value);
+        let gMonths = gYears * 12;
+
+        // 月繳金額計算
+        let m1_text = "無";
+        if (gYears > 0) {
+            m1_text = Math.round(loan * rate).toLocaleString() + ' 元';
+        }
+
+        let m2 = 0;
+        if (months - gMonths > 0) {
+            let remain = months - gMonths;
+            m2 = (loan * rate * Math.pow(1 + rate, remain)) / (Math.pow(1 + rate, remain) - 1);
+        }
+
+        // 依據文件之規費計算
+        let f1 = price * 0.02; // 買方仲介費 2%
+        let f2 = price * 0.0003; // 履約保證費 萬分之3
+        let f3 = 21500; // 代書費清單: 簽約+實登+過戶(預設一地一建)+設定代辦
+        let f4 = (loan * 1.2) * 0.001; // 地政設定規費 (貸款金額1.2倍 * 0.1%)
+        let misc = (parseFloat(document.getElementById('misc').value) || 0) * 10000;
+
+        let totalCash = (parseFloat(document.getElementById('down').value) * 10000) + f1 + f2 + f3 + f4 + misc;
+
+        // 渲染結果
+        document.getElementById('res').style.display = 'block';
+        document.getElementById('m1').innerText = m1_text;
+        document.getElementById('m2').innerText = Math.round(m2).toLocaleString() + ' 元';
+        document.getElementById('f1').innerText = Math.round(f1).toLocaleString() + ' 元';
+        document.getElementById('f2').innerText = Math.round(f2).toLocaleString() + ' 元';
+        document.getElementById('f3').innerText = Math.round(f3).toLocaleString() + ' 元';
+        document.getElementById('f4').innerText = Math.round(f4).toLocaleString() + ' 元';
+        document.getElementById('total').innerText = (totalCash / 10000).toFixed(2);
+        
+        // 平滑捲動
+        window.scrollTo({ top: document.getElementById('res').offsetTop - 30, behavior: 'smooth' });
+    }
+    
+    // 初始化
+    window.onload = sync;
+</script>
+</body>
+</html>
